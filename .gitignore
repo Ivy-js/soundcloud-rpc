@@ -1,0 +1,10 @@
+/bun.lockb
+/node_modules
+/rpc.js
+/build 
+/package-lock.json 
+/SCloudRPC.zip 
+/yarn.lock 
+/build
+/dist
+.env
