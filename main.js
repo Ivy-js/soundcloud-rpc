@@ -14,8 +14,8 @@ const { ipcMain,ipcRenderer, app, BrowserWindow, session } = require('electron')
 const { Client } = require("@xhayper/discord-rpc")
 require('dotenv').config();
 const client = new Client({
-    clientId : process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientId : "1313568157557850113", 
+    clientSecret: "g8rxi_3eZ2hnKKbjADMcdLdbca9-gL_9"
 })
 const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const fetch = require('cross-fetch');

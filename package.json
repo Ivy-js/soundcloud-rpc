@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "com.github.1sheol.soundcloud-discord-rpc",
-    "productName": "SCloud RPC",
+    "productName": "SoundCloudRPC",
     "mac": {
       "category": "public.app-category.music",
       "target": "dmg",
@@ -45,7 +45,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "app": "node -e \"require('./start.js')\"",
-    "make": "electron-forge make"
+    "winmake": "npx electron-builder build --win"
   },
   "keywords": [],
   "author": {
