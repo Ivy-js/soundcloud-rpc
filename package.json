@@ -26,16 +26,16 @@
     "mac": {
       "category": "public.app-category.music",
       "target": "dmg",
-      "icon": "/icons/icon.png"
+      "icon": "/icons/logo.png"
     },
     "win": {
       "target": "nsis",
-      "icon": "/icons/icon.ico"
+      "icon": "/icons/logo.ico"
     },
     "linux": {
       "category": "Audio;AudioVideo",
       "target": ["snap", "AppImage", "deb", "rpm"],
-      "icon": "/icons/icon.png"
+      "icon": "/icons/logo.png"
     },
     "files": [
       "main.js",
@@ -45,7 +45,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "app": "node -e \"require('./start.js')\"",
-    "winmake": "npx electron-builder build --win"
+    "winmake": "npx electron-builder build --win", 
+    "dev" : "npx electron --trace-warnings ./main.js"
   },
   "keywords": [],
   "author": {

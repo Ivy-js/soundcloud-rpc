@@ -13,8 +13,21 @@
 const { ipcRenderer } = require('electron');
 
 window.addEventListener('DOMContentLoaded', () => {
+
+    const isDark = localStorage.getItem('dark-mode') === 'true';    
+
+    if(isDark){
+        document.body.classList.add('dark');   
+    }
+
+    ipcRenderer.on('toggle-dark-mode', () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('dark-mode', document.body.classList.contains('dark'));
+    });
+
     setInterval(() => {
-        const titleElement = document.querySelector('.playbackSoundBadge__titleLink'); 
+        const titleElement = document.querySelector('.playbackSoundBadge__titleLink span[aria-hidden="true"]'); 
+        console.log(titleElement);
         const artistElement = document.querySelector('.playbackSoundBadge__lightLink'); 
         const coverElement = document.querySelector('.playControls__soundBadge .image__full'); 
         const trackLinkElement = document.querySelector('.playControls__soundBadge a'); 
