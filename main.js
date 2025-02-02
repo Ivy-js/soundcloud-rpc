@@ -104,13 +104,13 @@ app.whenReady().then(() => {
       label: "Options",
       submenu: [
         {
-            label: 'Mode Sombre',
-            click: () => {
-                mainWindow.webContents.executeJavaScript(`
+          label: "Mode Sombre",
+          click: () => {
+            mainWindow.webContents.executeJavaScript(`
                     document.body.classList.toggle('dark-mode');
                 `);
-            }
-        },        
+          },
+        },
         {
           type: "separator",
         },
@@ -125,10 +125,10 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(menu);
   console.log("Menu created");
   mainWindow.webContents.on("did-finish-load", () => {
-    mainWindow.webContents.executeJavaScript(`
-        document.body.classList.add('dark-mode');
-    `);
     mainWindow.webContents.insertCSS(`
+        body {
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
         body.dark-mode {
             background-color: #181818 !important;
             color: white !important;
@@ -336,24 +336,105 @@ app.whenReady().then(() => {
             background-color: #181818 !important;
             color: white !important;
         }
+        body.dark-mode .searchTitle {
+            color: white !important;
+            background-color: #181818 !important;
+        }
+        body.dark-mode .commentForm__wrapper {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .commentForm__input {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .compactTrackListItem__content {
+            background-color: #181818 !important;
+            color : white !important;
+        } 
+        body.dark-mode .compactTrackListItem__content:hover {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        } 
+        body.dark-mode .headerMenu {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .headerMenu__item {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .headerMenu__item:hover {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .headerMenu__item:active {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .headerMenu__item:visited {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .headerMenu__item:focus {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .headerMenu__item:after {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .headerMenu__item:before {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .dropdownContent__container:hover {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container:active {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container:visited {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container:focus {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container:after {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .dropdownContent__container:before {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .soundBadge__additional {
+            background-color: #181818 !important;
+            color : white !important;
+        }    
+        body.dark-mode .volume__sliderWrapper {
+            background-color: #181818 !important;
+            color : white !important;
+        }
+        body.dark-mode .localeSelector_language {
+            background-color: #181818 !important;
+            color : #ff7700 !important;
+        }
+        body.dark-mode .collectionNav .g-tabs-item.networkTabs__item:hover {
+            color: #ff7700 !important;
+        }
     `);
-    
     mainWindow.webContents.executeJavaScript(`
-            (function() {
-                function blockAudioAds() {
-                    const audios = document.querySelectorAll('audio, video');
-                    audios.forEach(audio => {
-                        if (audio.src && audio.src.includes('ads')) { 
-                            console.log('\x1b[31m[BLOCKED]\x1b[0m Audio ad founded :', audio.src);
-                            audio.volume = 0;
-                        } else {
-                            audio.volume = 1;   
-                        }
-                    });
-                }
-                setInterval(blockAudioAds, 1000);
-            })();
-        `);
+        document.body.classList.add('dark-mode');
+    `);
   });
 });
 ipcMain.on("toggle-dark-mode", () => {
