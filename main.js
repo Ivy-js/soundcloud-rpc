@@ -21,8 +21,8 @@ const {
 const { Client } = require("@xhayper/discord-rpc");
 require("dotenv").config();
 const client = new Client({
-  clientId: "1313568157557850113",
-  clientSecret: "g8rxi_3eZ2hnKKbjADMcdLdbca9-gL_9",
+  clientId: "1337115562802810974",
+  clientSecret: "eHlSCsJTAJA2_CPza1XrrKZJ9QZq7Amr",
 });
 const { ElectronBlocker } = require("@ghostery/adblocker-electron");
 const fetch = require("cross-fetch");
