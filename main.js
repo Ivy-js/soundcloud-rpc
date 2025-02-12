@@ -21,8 +21,8 @@ const {
 const { Client } = require("@xhayper/discord-rpc");
 require("dotenv").config();
 const client = new Client({
-  clientId: "1313568157557850113",
-  clientSecret: "g8rxi_3eZ2hnKKbjADMcdLdbca9-gL_9",
+  clientId: "1339181692233056356",
+  clientSecret: "5-QC6BC--YDN_xTRteIVKy0Uo8e9Z_g7",
 });
 const { ElectronBlocker } = require("@ghostery/adblocker-electron");
 const fetch = require("cross-fetch");
@@ -104,7 +104,7 @@ app.whenReady().then(() => {
       label: "Options",
       submenu: [
         {
-          label: "Mode Sombre",
+          label: "🌙 Mode Sombre",
           click: () => {
             mainWindow.webContents.executeJavaScript(`
                     document.body.classList.toggle('dark-mode');
@@ -115,7 +115,7 @@ app.whenReady().then(() => {
           type: "separator",
         },
         {
-          label: "Quitter",
+          label: "X Quitter",
           role: "quit",
         },
       ],
@@ -416,7 +416,7 @@ app.whenReady().then(() => {
             background-color: #181818 !important;
             color : #ff7700 !important;
         }
-        body.dark-mode .soundBadge__additional {
+        body.dark-mode .soundBadge__additional:hover {
             background-color: #181818 !important;
             color : white !important;
         }    
@@ -431,6 +431,21 @@ app.whenReady().then(() => {
         body.dark-mode .collectionNav .g-tabs-item.networkTabs__item:hover {
             color: #ff7700 !important;
         }
+        body.dark-mode .userDropbar {
+            background-color: #181818 !important;
+            color: white !important; 
+        }
+        body.dark-mode .dropbar__content {
+            background-color: #181818 !important; 
+        }
+        body.dark-mode .dropbar {
+            background-color: #181818 !important;
+        }
+        body.dark-mode .profileUploadFooter {
+            background-color: #181818 !important;
+            color: white !important;
+        }
+
     `);
     mainWindow.webContents.executeJavaScript(`
         document.body.classList.add('dark-mode');

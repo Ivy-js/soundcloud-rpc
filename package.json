@@ -12,6 +12,7 @@
     "nodemon": "^3.1.7"
   },
   "name": "scloudrpc",
+  "description": "SoundCloudRPC", 
   "version": "1.0.2",
   "main": "main.js",
   "devDependencies": {
@@ -25,17 +26,14 @@
     "productName": "SoundCloudRPC",
     "mac": {
       "category": "public.app-category.music",
-      "target": "dmg",
-      "icon": "/icons/logo.png"
+      "target": "dmg"
     },
     "win": {
-      "target": "nsis",
-      "icon": "/icons/logo.ico"
+      "target": "nsis"
     },
     "linux": {
       "category": "Audio;AudioVideo",
-      "target": ["snap", "AppImage", "deb", "rpm"],
-      "icon": "/icons/logo.png"
+      "target": ["snap", "AppImage", "deb", "rpm"]
     },
     "files": [
       "main.js",
