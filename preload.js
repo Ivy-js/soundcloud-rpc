@@ -25,6 +25,22 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('dark-mode', document.body.classList.contains('dark'));
     });
 
+    let lastState = false; 
+    const playButton = document.querySelector('.playControls__control playControls__play')
+    const observer = new MutationObserver(() => { 
+        if(playButton) { 
+            const isPlaying = playButton.classList.contains('playing') 
+            if(isPlaying !== lastState){ 
+                lastState = isPlaying; 
+                ipcRenderer.send('update-rpc', {isPlaying})
+            }
+        }
+    })
+    if(playButton){
+        observer.observe(playButton, { attributes: true, attributeFilter: ['class']})
+    }
+
+
     setInterval(() => {
         const titleElement = document.querySelector('.playbackSoundBadge__titleLink span[aria-hidden="true"]'); 
         console.log(titleElement);
@@ -44,5 +60,7 @@ window.addEventListener('DOMContentLoaded', () => {
         } else {
             console.warn('Un ou plusieurs éléments manquent dans le DOM');
         }
-    }, 1000); 
+
+    
+    }, 500); 
 });

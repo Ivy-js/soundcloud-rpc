@@ -24,7 +24,7 @@ const config = {
   },
   linux: {
     category: "Audio;AudioVideo",
-    target: ["snap", "AppImage", "deb", "rpm"],
+    target: ["snap", "AppImage", "deb"],
     icon: join(__dirname, "/icons/icon.png"),
   },
   files: [

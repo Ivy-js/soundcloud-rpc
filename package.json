@@ -12,7 +12,7 @@
     "nodemon": "^3.1.7"
   },
   "name": "scloudrpc",
-  "description": "SoundCloudRPC", 
+  "description": "SoundCloudRPC",
   "version": "1.0.2",
   "main": "main.js",
   "devDependencies": {
@@ -33,7 +33,12 @@
     },
     "linux": {
       "category": "Audio;AudioVideo",
-      "target": ["snap", "AppImage", "deb", "rpm"]
+      "target": [
+        "snap",
+        "AppImage",
+        "deb",
+        "rpm"
+      ]
     },
     "files": [
       "main.js",
@@ -43,8 +48,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "app": "node -e \"require('./start.js')\"",
-    "winmake": "npx electron-builder build --win", 
-    "dev" : "npx electron --trace-warnings ./main.js"
+    "winmake": "npx electron-builder build --win",
+    "dev": "npx electron --trace-warnings ./main.js"
   },
   "keywords": [],
   "author": {

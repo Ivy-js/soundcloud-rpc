@@ -456,17 +456,27 @@ ipcMain.on("toggle-dark-mode", () => {
   mainWindow.webContents.send("toggle-dark-mode");
 });
 
-ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink }) => {
+ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, music_state }) => {
   console.log("update-rpc event received:", {
     title,
     artist,
     cover,
     trackLink,
+    music_state
   });
 
   console.log("Title: ", title);
 
   // 500x500 url
+
+  let controlImg,controlState; 
+  if (music_state){ 
+    controlImg = "https://i.imgur.com/3BG8sJ4.png"
+    controlState = "Playing"
+  } else { 
+    controlImg = "https://i.imgur.com/mh5yh1z.png"; 
+    controlState = "Pause"
+  }
 
   const coverUrl = cover.replace("-t50x50", "-t500x500");
   console.log("Cover URL: ", coverUrl);
@@ -474,6 +484,8 @@ ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink }) => {
     details: title,
     state: artist,
     largeImageKey: coverUrl,
+    smallImageKey: controlImg, 
+    smallImageText: controlState, 
     type: 2,
     startTimestamp: new Date(),
     buttons: [
