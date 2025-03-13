@@ -1,66 +1,55 @@
-/* ******************************************************************************************************* */
-/*                                                                                                         */
-/*                                                              :::::::::::    :::     :::    :::   :::    */
-/*   preload.js                                                 :+:        :+:     :+:    :+:   :+:        */
-/*                                                             +:+        +:+     +:+     +:+ +:+          */
-/*   By: Ivy <contact@1sheol.xyz>                             +#+        +#+     +:+      +#++:            */
-/*                                                           +#+         +#+   +#+        +#+              */
-/*   Created: 2024/11/09 17:21:53 by Ivy                    #+#         #+#+#+#         #+#                */
-/*   Updated: 2024/12/09 21:07:00 by Ivy              ###########        ###           ###                 */
-/*                                                                                                         */
-/* ******************************************************************************************************* */
+const { ipcRenderer } = require("electron");
 
-const { ipcRenderer } = require('electron');
+window.addEventListener("DOMContentLoaded", () => {
+  const isDark = localStorage.getItem("dark-mode") === "true";
 
-window.addEventListener('DOMContentLoaded', () => {
+  if (isDark) {
+    document.body.classList.add("dark");
+  }
 
-    const isDark = localStorage.getItem('dark-mode') === 'true';    
+  ipcRenderer.on("toggle-dark-mode", () => {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("dark-mode", document.body.classList.contains("dark"));
+  });
 
-    if(isDark){
-        document.body.classList.add('dark');   
+  setInterval(() => {
+    let lastState = false;
+    const playButton = document.querySelector(
+      ".playControls__control playControls__play"
+    );
+    if (playButton) {
+      const isPlaying = playButton.classList.contains("playing");
+      if (isPlaying !== lastState) {
+        lastState = isPlaying;
+        ipcRenderer.send("music-update", { isPlaying });
+        console.log("isPlaying", isPlaying);
+      }
     }
 
-    ipcRenderer.on('toggle-dark-mode', () => {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('dark-mode', document.body.classList.contains('dark'));
-    });
+    const titleElement = document.querySelector(
+      '.playbackSoundBadge__titleLink span[aria-hidden="true"]'
+    );
+    const artistElement = document.querySelector(
+      ".playbackSoundBadge__lightLink"
+    );
+    const coverElement = document.querySelector(
+      ".playControls__soundBadge .image__full"
+    );
+    const trackLinkElement = document.querySelector(
+      ".playControls__soundBadge a"
+    );
 
-    let lastState = false; 
-    const playButton = document.querySelector('.playControls__control playControls__play')
-    const observer = new MutationObserver(() => { 
-        if(playButton) { 
-            const isPlaying = playButton.classList.contains('playing') 
-            if(isPlaying !== lastState){ 
-                lastState = isPlaying; 
-                ipcRenderer.send('update-rpc', {isPlaying})
-            }
-        }
-    })
-    if(playButton){
-        observer.observe(playButton, { attributes: true, attributeFilter: ['class']})
+    if (titleElement && artistElement && coverElement && trackLinkElement) {
+      const title = titleElement.textContent.trim();
+      const artist = artistElement.textContent.trim();
+      const cover = coverElement.style.backgroundImage
+        .replace('url("', "")
+        .replace('")', "");
+      const trackLink = trackLinkElement.href;
+
+      ipcRenderer.send("update-rpc", { title, artist, cover, trackLink });
+    } else {
+      console.warn("Un ou plusieurs éléments manquent dans le DOM");
     }
-
-
-    setInterval(() => {
-        const titleElement = document.querySelector('.playbackSoundBadge__titleLink span[aria-hidden="true"]'); 
-        console.log(titleElement);
-        const artistElement = document.querySelector('.playbackSoundBadge__lightLink'); 
-        const coverElement = document.querySelector('.playControls__soundBadge .image__full'); 
-        const trackLinkElement = document.querySelector('.playControls__soundBadge a'); 
-
-        if (titleElement && artistElement && coverElement && trackLinkElement) {
-            const title = titleElement.textContent.trim();
-            const artist = artistElement.textContent.trim();
-            const cover = coverElement.style.backgroundImage
-                .replace('url("', '')
-                .replace('")', '');
-            const trackLink = trackLinkElement.href; 
-
-            ipcRenderer.send('update-rpc', { title, artist, cover, trackLink });
-        } else {
-            console.warn('Un ou plusieurs éléments manquent dans le DOM');
-        }
-
-    
-    }, 500); 
+  }, 500);
 });

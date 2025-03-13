@@ -24,7 +24,6 @@ const client = new Client({
   clientId: "1339181692233056356",
   clientSecret: "5-QC6BC--YDN_xTRteIVKy0Uo8e9Z_g7",
 });
-const { ElectronBlocker } = require("@ghostery/adblocker-electron");
 const fetch = require("cross-fetch");
 let mainWindow;
 
@@ -66,10 +65,7 @@ app.whenReady().then(() => {
     },
   });
 
-  ElectronBlocker.fromPrebuiltAdsAndTracking(fetch).then((blocker) => {
-    blocker.enableBlockingInSession(session.defaultSession);
-    blocker.enableBlockingInSession(userSession);
-  });
+
 
   // trafic filtering
 
@@ -455,55 +451,58 @@ app.whenReady().then(() => {
 ipcMain.on("toggle-dark-mode", () => {
   mainWindow.webContents.send("toggle-dark-mode");
 });
+ipcMain.on("music-update", (event, { isPlaying }) => {
+  ipcMain.on(
+    "update-rpc",
+    (event, { title, artist, cover, trackLink }) => {
+      console.log("update-rpc event received:", {
+        title,
+        artist,
+        cover,
+        trackLink,
+      });
 
-ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, music_state }) => {
-  console.log("update-rpc event received:", {
-    title,
-    artist,
-    cover,
-    trackLink,
-    music_state
-  });
+      console.log(`Music State : ${isPlaying}`)
+      console.log("Title: ", title);
 
-  console.log("Title: ", title);
+      // 500x500 url
 
-  // 500x500 url
+      let controlImg, controlState;
+      if (isPlaying) {
+        controlImg = "https://i.imgur.com/3BG8sJ4.png";
+        controlState = "Playing";
+      } else {
+        controlImg = "https://i.imgur.com/mh5yh1z.png";
+        controlState = "Pause";
+      }
 
-  let controlImg,controlState; 
-  if (music_state){ 
-    controlImg = "https://i.imgur.com/3BG8sJ4.png"
-    controlState = "Playing"
-  } else { 
-    controlImg = "https://i.imgur.com/mh5yh1z.png"; 
-    controlState = "Pause"
-  }
-
-  const coverUrl = cover.replace("-t50x50", "-t500x500");
-  console.log("Cover URL: ", coverUrl);
-  client.user?.setActivity({
-    details: title,
-    state: artist,
-    largeImageKey: coverUrl,
-    smallImageKey: controlImg, 
-    smallImageText: controlState, 
-    type: 2,
-    startTimestamp: new Date(),
-    buttons: [
-      {
-        label: `Listen in App`,
-        url: trackLink,
-      },
-      {
-        label: `GitHub`,
-        url: `https://github.com/ivy-js/soundcloud-rpc`,
-      },
-    ],
-  });
-  console.log(
-    `\x1b[36m[DISCORD]\x1b[0m | Mise à jour de la présence : ${title} - ${artist}`
+      const coverUrl = cover.replace("-t50x50", "-t500x500");
+      console.log("Cover URL: ", coverUrl);
+      client.user?.setActivity({
+        details: title,
+        state: artist,
+        largeImageKey: coverUrl,
+        smallImageKey: controlImg,
+        smallImageText: controlState,
+        type: 2,
+        startTimestamp: new Date(),
+        buttons: [
+          {
+            label: `Listen in App`,
+            url: trackLink,
+          },
+          {
+            label: `GitHub`,
+            url: `https://github.com/ivy-js/soundcloud-rpc`,
+          },
+        ],
+      });
+      console.log(
+        `\x1b[36m[DISCORD]\x1b[0m | Mise à jour de la présence : ${title} - ${artist}`
+      );
+    }
   );
 });
-
 client.on("ready", () => {
   console.log(
     "\x1b[36m[DISCORD]\x1b[0m" +
