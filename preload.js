@@ -15,14 +15,14 @@ window.addEventListener("DOMContentLoaded", () => {
   setInterval(() => {
     let lastState = false;
     const playButton = document.querySelector(
-      ".playControls__control playControls__play"
+      ".playControl sc-ir playControls__control playControls__play"
     );
+
+    
     if (playButton) {
       const isPlaying = playButton.classList.contains("playing");
       if (isPlaying !== lastState) {
         lastState = isPlaying;
-        ipcRenderer.send("music-update", { isPlaying });
-        console.log("isPlaying", isPlaying);
       }
     }
 
@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
         .replace('")', "");
       const trackLink = trackLinkElement.href;
 
-      ipcRenderer.send("update-rpc", { title, artist, cover, trackLink });
+      ipcRenderer.send("update-rpc", { title, artist, cover, trackLink, lastState });
     } else {
       console.warn("Un ou plusieurs éléments manquent dans le DOM");
     }

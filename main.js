@@ -65,8 +65,6 @@ app.whenReady().then(() => {
     },
   });
 
-
-
   // trafic filtering
 
   userSession.webRequest.onBeforeRequest((details, callback) => {
@@ -451,56 +449,53 @@ app.whenReady().then(() => {
 ipcMain.on("toggle-dark-mode", () => {
   mainWindow.webContents.send("toggle-dark-mode");
 });
-ipcMain.on("music-update", (event, { isPlaying }) => {
-  ipcMain.on(
-    "update-rpc",
-    (event, { title, artist, cover, trackLink }) => {
-      console.log("update-rpc event received:", {
-        title,
-        artist,
-        cover,
-        trackLink,
-      });
 
-      console.log(`Music State : ${isPlaying}`)
-      console.log("Title: ", title);
+ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, isPlaying  }) => {
+  console.log("update-rpc event received:", {
+    title,
+    artist,
+    cover,
+    trackLink,
+    isPlaying,
+  });
 
-      // 500x500 url
+  console.log(`Music State : ${isPlaying}`);
+  console.log("Title: ", title);
 
-      let controlImg, controlState;
-      if (isPlaying) {
-        controlImg = "https://i.imgur.com/3BG8sJ4.png";
-        controlState = "Playing";
-      } else {
-        controlImg = "https://i.imgur.com/mh5yh1z.png";
-        controlState = "Pause";
-      }
+  // 500x500 url
 
-      const coverUrl = cover.replace("-t50x50", "-t500x500");
-      console.log("Cover URL: ", coverUrl);
-      client.user?.setActivity({
-        details: title,
-        state: artist,
-        largeImageKey: coverUrl,
-        smallImageKey: controlImg,
-        smallImageText: controlState,
-        type: 2,
-        startTimestamp: new Date(),
-        buttons: [
-          {
-            label: `Listen in App`,
-            url: trackLink,
-          },
-          {
-            label: `GitHub`,
-            url: `https://github.com/ivy-js/soundcloud-rpc`,
-          },
-        ],
-      });
-      console.log(
-        `\x1b[36m[DISCORD]\x1b[0m | Mise à jour de la présence : ${title} - ${artist}`
-      );
-    }
+  let controlImg, controlState;
+  if (isPlaying) {
+    controlImg = "https://i.imgur.com/3BG8sJ4.png";
+    controlState = "Playing";
+  } else {
+    controlImg = "https://i.imgur.com/mh5yh1z.png";
+    controlState = "Pause";
+  }
+
+  const coverUrl = cover.replace("-t50x50", "-t500x500");
+  console.log("Cover URL: ", coverUrl);
+  client.user?.setActivity({
+    details: title,
+    state: artist,
+    largeImageKey: coverUrl,
+    smallImageKey: controlImg,
+    // smallImageText: controlState,
+    type: 2,
+    startTimestamp: new Date(),
+    buttons: [
+      {
+        label: `Listen in App`,
+        url: trackLink,
+      },
+      {
+        label: `GitHub`,
+        url: `https://github.com/ivy-js/soundcloud-rpc`,
+      },
+    ],
+  });
+  console.log(
+    `\x1b[36m[DISCORD]\x1b[0m | Mise à jour de la présence : ${title} - ${artist}`
   );
 });
 client.on("ready", () => {
