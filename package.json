@@ -78,13 +78,26 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Ivy-js",
+        "repo": "soundcloud-rpc"
+      }
+    ]
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "app": "node -e \"require('./start.js')\"",
-    "winmake": "npx electron-builder build --win",
-    "dev": "npx electron --trace-warnings ./main.js"
+    "dev": "npx electron --trace-warnings ./main.js",
+    "build": "npx electron-builder build",
+    "build:win": "npx electron-builder build --win",
+    "build:mac": "npx electron-builder build --mac",
+    "build:linux": "npx electron-builder build --linux",
+    "build:all": "npx electron-builder build --win --mac --linux",
+    "winmake": "npm run build:win",
+    "release": "npx electron-builder build --publish=always"
   },
   "keywords": [],
   "author": {

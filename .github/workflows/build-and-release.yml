@@ -1,0 +1,217 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a new release'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: linux
+          - os: windows-latest
+            platform: windows
+            artifact_name: windows
+          - os: macos-latest
+            platform: macos
+            artifact_name: macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build for Linux
+      if: matrix.platform == 'linux'
+      run: npx electron-builder build --linux --publish=never
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build for Windows
+      if: matrix.platform == 'windows'
+      run: npx electron-builder build --win --publish=never
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build for macOS
+      if: matrix.platform == 'macos'
+      run: npx electron-builder build --mac --publish=never
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Linux artifacts
+      if: matrix.platform == 'linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: |
+          dist/*.AppImage
+          dist/*.deb
+          dist/*.rpm
+          dist/*.snap
+
+    - name: Upload Windows artifacts
+      if: matrix.platform == 'windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: |
+          dist/*.exe
+          dist/*.msi
+
+    - name: Upload macOS artifacts
+      if: matrix.platform == 'macos'
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-build
+        path: |
+          dist/*.dmg
+          dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get package version
+      id: package-version
+      run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: ls -R artifacts/
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package-version.outputs.VERSION }}
+        release_name: SoundCloudRPC v${{ steps.package-version.outputs.VERSION }}
+        body: |
+          ## SoundCloudRPC v${{ steps.package-version.outputs.VERSION }}
+          
+          ### Features
+          - Discord Rich Presence for SoundCloud
+          - Real-time Twitch overlay for streaming
+          - Modern glassmorphism design
+          - Cross-platform support (Windows, macOS, Linux)
+          
+          ### Downloads
+          - **Windows**: Download the `.exe` file
+          - **macOS**: Download the `.dmg` file  
+          - **Linux**: Download `.AppImage`, `.deb`, `.rpm`, or `.snap` based on your distribution
+          
+          ### Installation
+          1. Download the appropriate file for your operating system
+          2. Install/run the application
+          3. The overlay server will be available at `http://localhost:3554/overlay`
+          4. Use this URL as a Browser Source in OBS (540x120 resolution recommended)
+          
+          ---
+          Built with ❤️ by @1sheol
+        draft: false
+        prerelease: false
+
+    # Upload Linux files
+    - name: Upload Linux AppImage
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/linux-build/SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}.AppImage
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-linux.AppImage
+        asset_content_type: application/octet-stream
+      continue-on-error: true
+
+    - name: Upload Linux DEB
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/linux-build/soundcloudrpc_${{ steps.package-version.outputs.VERSION }}_amd64.deb
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-linux.deb
+        asset_content_type: application/vnd.debian.binary-package
+      continue-on-error: true
+
+    - name: Upload Linux RPM
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/linux-build/soundcloudrpc-${{ steps.package-version.outputs.VERSION }}.x86_64.rpm
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-linux.rpm
+        asset_content_type: application/x-rpm
+      continue-on-error: true
+
+    # Upload Windows files
+    - name: Upload Windows EXE
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/windows-build/SoundCloudRPC Setup ${{ steps.package-version.outputs.VERSION }}.exe
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-windows-setup.exe
+        asset_content_type: application/octet-stream
+      continue-on-error: true
+
+    # Upload macOS files
+    - name: Upload macOS DMG
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/macos-build/SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}.dmg
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-macos.dmg
+        asset_content_type: application/octet-stream
+      continue-on-error: true
+
+    - name: Upload macOS ZIP
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/macos-build/SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-mac.zip
+        asset_name: SoundCloudRPC-${{ steps.package-version.outputs.VERSION }}-macos.zip
+        asset_content_type: application/zip
+      continue-on-error: true
