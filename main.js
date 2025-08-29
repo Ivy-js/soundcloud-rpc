@@ -24,7 +24,12 @@ const client = new Client({
   clientId: "1339181692233056356",
   clientSecret: "5-QC6BC--YDN_xTRteIVKy0Uo8e9Z_g7",
 });
+// add: allow launching the overlay server from the app
+const path = require('path');
+const { spawn } = require('child_process');
+let overlayState = false; 
 const fetch = require("cross-fetch");
+const { dialog, shell, clipboard } = require("electron");
 let mainWindow;
 
 const args = process.argv.slice(2);
@@ -64,6 +69,19 @@ app.whenReady().then(() => {
       nodeIntegration: false,
     },
   });
+
+  // Try to auto-start the overlay server (optional). If the user prefers to run it manually this is harmless.
+  try {
+    const overlayScript = path.join(__dirname, 'twitchOverlay.js');
+    const child = spawn(process.execPath, [overlayScript], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    child.unref();
+    console.log('[OVERLAY] Attempted to start twitchOverlay server automatically.');
+  } catch (err) {
+    console.warn('[OVERLAY] Unable to auto-start overlay server:', err);
+  }
 
   // trafic filtering
 
@@ -115,8 +133,41 @@ app.whenReady().then(() => {
       ],
     },
   ];
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  const livestream_tab = [
+    {
+        label: "Livestream Overlay",
+        submenu: [
+            {
+                label: "Activer/Désactiver l'Overlay",
+                click: () => {
+                    overlayState = !overlayState;
+                    const status = overlayState ? "activé" : "désactivé";
+                    console.log(`Overlay Twitch ${status}`);
+                    mainWindow.webContents.send("overlay-status-changed", overlayState);
+                },
+            },
+            {
+                type: "separator",
+            },
+            {
+                label: "Ouvrir l'Overlay",
+                click: () => {
+                    shell.openExternal("http://localhost:3554/"); // Ouvre l'URL dans le navigateur par défaut
+                },
+            },
+            {
+                label: "Copier le lien de l'Overlay",
+                click: () => {
+                    clipboard.writeText("http://localhost:3554/");
+                    console.log("Lien de l'Overlay copié dans le presse-papiers");
+                },
+            },
+        ],  
+    }
+  ]
+    template.push(...livestream_tab);
+  const optionTab = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(optionTab);
   console.log("Menu created");
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.insertCSS(`
@@ -450,20 +501,54 @@ ipcMain.on("toggle-dark-mode", () => {
   mainWindow.webContents.send("toggle-dark-mode");
 });
 
-ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, isPlaying  }) => {
+// Reworked update-rpc handler: builds a richer payload and sends to the overlay server at /update-rpc (port 3579)
+ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, isPlaying, duration, position }) => {
   console.log("update-rpc event received:", {
     title,
     artist,
     cover,
     trackLink,
     isPlaying,
+    duration,
+    position
   });
+
+  // Normalize cover url to a larger size if available
+  const coverUrl = cover ? cover.replace("-t50x50", "-t500x500") : '';
+
+  if (overlayState) {
+    const payload = {
+      title: title || '',
+      artist: artist || '',
+      cover: coverUrl,
+      trackLink: trackLink || '',
+      isPlaying: !!isPlaying,
+      duration: typeof duration !== 'undefined' ? duration : null,
+      position: typeof position !== 'undefined' ? position : null,
+      // If starting to play, set a start timestamp so overlay can compute elapsed time
+      startTimestamp: isPlaying ? Date.now() - (position ? position * 1000 : 0) : null,
+    };
+
+    fetch("http://localhost:3554/update-rpc", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.text())
+      .then(data => {
+        console.log("Overlay response:", data);
+      })
+      .catch(err => {
+        console.error("Overlay request error:", err);
+      });
+  }
 
   console.log(`Music State : ${isPlaying}`);
   console.log("Title: ", title);
 
-  // 500x500 url
-
+  // Controls for small image in Discord presence
   let controlImg, controlState;
   if (isPlaying) {
     controlImg = "https://i.imgur.com/3BG8sJ4.png";
@@ -473,16 +558,15 @@ ipcMain.on("update-rpc", (event, { title, artist, cover, trackLink, isPlaying  }
     controlState = "Pause";
   }
 
-  const coverUrl = cover.replace("-t50x50", "-t500x500");
   console.log("Cover URL: ", coverUrl);
   client.user?.setActivity({
     details: title,
     state: artist,
     largeImageKey: coverUrl,
     smallImageKey: controlImg,
-    // smallImageText: controlState,
     type: 2,
-    startTimestamp: new Date(),
+    // use a start timestamp when playing so Discord shows progress
+    startTimestamp: isPlaying ? new Date() : undefined,
     buttons: [
       {
         label: `Listen in App`,

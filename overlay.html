@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1200, initial-scale=1" />
+<title>SoundCloud Overlay</title>
+<style>
+  :root {
+    --accent: #ff7700;
+    --accent-contrast: #fff;
+    --glass-bg: rgba(60, 50, 70, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+  html,body{margin:0;padding:0;background:transparent;font-family:'Segoe UI', system-ui, -apple-system, sans-serif}
+  .overlay{
+    width:540px;height:120px;display:flex;align-items:center;
+    background:linear-gradient(135deg, var(--glass-bg), rgba(80,70,90,0.9));
+    backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+    border-radius:16px;overflow:hidden;color:var(--accent-contrast);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 0 1px var(--glass-border);
+    padding:0;gap:0;
+  }
+  .cover{
+    width:120px;height:120px;object-fit:cover;flex:0 0 120px;
+    border-radius:16px 0 0 16px;
+  }
+  .content{
+    flex:1;padding:16px 20px;display:flex;flex-direction:column;justify-content:center;
+    position:relative;
+  }
+  .track-info{
+    margin-bottom:12px;
+  }
+  .title{
+    font-size:16px;font-weight:700;line-height:1.2;margin-bottom:4px;
+    text-shadow:0 1px 8px rgba(0,0,0,0.7);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .artist{
+    font-size:13px;opacity:0.85;font-weight:400;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .progress-section{
+    display:flex;align-items:center;gap:12px;
+  }
+  .time{
+    font-size:12px;font-weight:500;opacity:0.9;min-width:35px;text-align:center;
+  }
+  .progress-bar{
+    flex:1;height:4px;background:rgba(255,255,255,0.2);border-radius:20px;overflow:hidden;
+    position:relative;
+  }
+  .progress{
+    height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ffaa44);
+    border-radius:20px;transition:width 0.3s ease;
+  }
+  @media (max-width:600px){
+    .overlay{width:100%;max-width:540px}
+    .title{font-size:15px}
+    .artist{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay">
+  <img id="cover" class="cover" src="" alt="cover" />
+  <div class="content">
+    <div class="track-info">
+      <div class="title" id="title">No track playing</div>
+      <div class="artist" id="artist">Connect to SoundCloud</div>
+    </div>
+    <div class="progress-section">
+      <div class="time" id="elapsed">0:00</div>
+      <div class="progress-bar">
+        <div id="progress" class="progress"></div>
+      </div>
+      <div class="time" id="duration">0:00</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let latest = null;
+
+function secondsToHMS(s) {
+  if (s == null || isNaN(s) || s < 0) return '0:00';
+  s = Math.floor(s);
+  const m = Math.floor(s/60);
+  const ss = String(s%60).padStart(2,'0');
+  return `${m}:${ss}`;
+}
+
+function updateUI(data){
+  const coverEl = $('cover');
+  const titleEl = $('title');
+  const artistEl = $('artist');
+  const progressEl = $('progress');
+  const elapsedEl = $('elapsed');
+  const durationEl = $('duration');
+
+  titleEl.textContent = data.title || 'No track playing';
+  artistEl.textContent = data.artist || 'Connect to SoundCloud';
+
+  // Debug: log the received data
+  console.log('[OVERLAY] Received data:', {
+    duration: data.duration,
+    position: data.position,
+    isPlaying: data.isPlaying,
+    startTimestamp: data.startTimestamp
+  });
+
+  // Cover handling with color extraction
+  if (data.cover) {
+    if (coverEl.src !== data.cover) {
+      coverEl.src = data.cover;
+      coverEl.onload = () => extractAccentFromImage(coverEl);
+      coverEl.onerror = () => setAccent('#ff7700','#fff');
+    }
+  } else {
+    coverEl.src = '';
+    setAccent('#ff7700','#fff');
+  }
+
+  // Progress calculation with better validation
+  let currentPosition = null;
+  const now = Date.now();
+  
+  if (data.isPlaying && data.startTimestamp && typeof data.startTimestamp === 'number') {
+    // Calculate current position based on startTimestamp
+    currentPosition = (now - data.startTimestamp) / 1000;
+  } else if (typeof data.position === 'number' && !isNaN(data.position)) {
+    currentPosition = data.position;
+  }
+
+  const duration = (typeof data.duration === 'number' && !isNaN(data.duration) && data.duration > 0) ? data.duration : null;
+
+  console.log('[OVERLAY] Computed values:', {
+    currentPosition,
+    duration,
+    currentPositionHMS: currentPosition ? secondsToHMS(currentPosition) : 'null',
+    durationHMS: duration ? secondsToHMS(duration) : 'null'
+  });
+
+  if (currentPosition != null && currentPosition >= 0 && duration && duration > 0) {
+    const pct = Math.max(0, Math.min(1, currentPosition / duration));
+    progressEl.style.width = `${pct * 100}%`;
+    elapsedEl.textContent = secondsToHMS(currentPosition);
+    durationEl.textContent = secondsToHMS(duration);
+  } else if (currentPosition != null && currentPosition >= 0) {
+    // Playing but unknown duration
+    progressEl.style.width = '0%';
+    elapsedEl.textContent = secondsToHMS(currentPosition);
+    durationEl.textContent = '--:--';
+  } else {
+    progressEl.style.width = '0%';
+    elapsedEl.textContent = '0:00';
+    durationEl.textContent = duration ? secondsToHMS(duration) : '--:--';
+  }
+}
+
+function setAccent(hex, contrast){
+  document.documentElement.style.setProperty('--accent', hex);
+  document.documentElement.style.setProperty('--accent-contrast', contrast);
+}
+
+function extractAccentFromImage(img){
+  try{
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width = 64;
+    const h = canvas.height = 64;
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const imgData = ctx.getImageData(0,0,w,h).data;
+    let r=0,g=0,b=0,count=0;
+    for (let i=0;i<imgData.length;i+=4){
+      const alpha = imgData[i+3];
+      if (alpha < 125) continue;
+      r += imgData[i]; g += imgData[i+1]; b += imgData[i+2]; count++;
+    }
+    if (count===0) return setAccent('#ff7700','#fff');
+    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
+    
+    // Create a more sophisticated color scheme based on the cover
+    const hex = `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
+    const luminance = (0.299*r + 0.587*g + 0.114*b)/255;
+    const contrast = luminance > 0.6 ? 'rgba(0,0,0,0.9)' : '#fff';
+    
+    // Adjust background color based on cover colors
+    const bgColor = `rgba(${Math.max(r-30,20)}, ${Math.max(g-30,20)}, ${Math.max(b-30,30)}, 0.85)`;
+    document.documentElement.style.setProperty('--glass-bg', bgColor);
+    
+    setAccent(hex, contrast);
+  }catch(e){
+    console.warn('color extract failed', e);
+  }
+}
+
+// EventSource for real-time updates
+if (typeof(EventSource) !== "undefined") {
+  const evtSource = new EventSource('/events');
+  evtSource.onmessage = function(event) {
+    try {
+      const data = JSON.parse(event.data);
+      latest = data;
+      updateUI(data);
+    } catch(e) {
+      console.warn('Failed to parse SSE data:', e);
+    }
+  };
+  
+  evtSource.onerror = function(event) {
+    console.warn('SSE connection error, falling back to polling');
+    evtSource.close();
+    startPolling();
+  };
+} else {
+  startPolling();
+}
+
+function startPolling() {
+  setInterval(async () => {
+    try{
+      const res = await fetch('/track');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data) return;
+      latest = data;
+      updateUI(data);
+    }catch(e){console.warn('polling error',e)}
+  }, 1000);
+}
+
+// Initialize with empty state
+updateUI({title: '', artist: '', isPlaying: false});
+</script>
+</body>
+</html>
